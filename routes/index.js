@@ -1,6 +1,7 @@
 var conn = require('./../inc/db');
 var express = require('express');
 var menus = require('./../inc/menus');
+var reservations = require('./../inc/reservations');
 var router = express.Router();
 
 /* GET home page. */
@@ -8,7 +9,8 @@ router.get('/', function(req, res, next) {
   menus.getMenus().then(results => {
     res.render(`index`, {
       title: 'Restaurante Saboroso!',
-      menus: results  
+      menus: results  ,
+      isHome: true
     })
   })
 });
@@ -20,7 +22,6 @@ router.get('/contact', function(req, res, next){
     background: 'images/img_bg_2.jpg',
     h1: 'Diga um oi NO CONTATO MAGRÃO'
   })
-  
 })
 router.get('/menu', function(req, res, next){
   menus.getMenus().then(results => {
@@ -31,16 +32,38 @@ router.get('/menu', function(req, res, next){
       menus: results
     })
   })
-  
 })
 router.get('/reservation', function(req, res, next){
 
-  res.render('reservation', { 
-    title: 'Reservas | Restaurante Saboroso!',
-    background: 'images/img_bg_2.jpg',
-    h1: 'Diga um oi NO reservaai  MAGRÃO'
-  })
+  reservations.render(req, res);
+  
 })
+
+
+router.post('/reservation', function(req, res, next){
+  if(!req.body.name) {
+    reservations.render(req, res, "Digite o nome");
+  } else if(!req.body.email) {
+    reservations.render(req, res, "Digite o email")
+  } else if(!req.body.people) {
+    reservations.render(req, res, "Digite o nº de pessoas");
+  } else if(!req.body.date) {
+    reservations.render(req, res, "Digite a data");
+  } else if(!req.body.time) {
+    reservations.render(req, res, "Digite a hora");
+  } else {
+    reservations.save(req.body).then(results => {
+      req.body = {}
+      reservations.render(req, res, null, "Reserva Realizada");
+
+    }).catch(err => {
+      
+      reservations.render(req, res, err.message);
+    
+    });
+  }  
+})
+
 router.get('/services', function(req, res, next){
 
   res.render('services', { 
@@ -48,6 +71,5 @@ router.get('/services', function(req, res, next){
     background: 'images/img_bg_1.jpg',
     h1: 'Diga um oi NO SERVIÇOS MAGRÃO'
   })
-  
 })
 module.exports = router;
